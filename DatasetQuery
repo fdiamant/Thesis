@@ -1,0 +1,123 @@
+  WITH blood AS (
+    SELECT
+    labevents.subject_id,
+    labevents.hadm_id
+  -- convert from itemid into a meaningful column
+  , ROUND(AVG(CASE WHEN itemid = 50868 THEN valuenum ELSE NULL END),2) AS AnionGap
+  , ROUND(AVG(CASE WHEN itemid = 50882 THEN valuenum ELSE NULL END),2) AS Bicarbonate
+  , ROUND(AVG(CASE WHEN itemid = 50893 THEN valuenum ELSE NULL END),2) AS CalciumTotal
+  , ROUND(AVG(CASE WHEN itemid = 50902 THEN valuenum ELSE NULL END),2) AS Chloride
+  , ROUND(AVG(CASE WHEN itemid = 50912 THEN valuenum ELSE NULL END),2) AS Creatinine
+  , ROUND(AVG(CASE WHEN itemid = 50931 THEN valuenum ELSE NULL END),2) AS Glucose
+  , ROUND(AVG(CASE WHEN itemid = 50960 THEN valuenum ELSE NULL END),2) AS Magnesium
+  , ROUND(AVG(CASE WHEN itemid = 50970 THEN valuenum ELSE NULL END),2) AS Phosphate
+  , ROUND(AVG(CASE WHEN itemid = 50971 THEN valuenum ELSE NULL END),2) AS Potassium
+  , ROUND(AVG(CASE WHEN itemid = 50983 THEN valuenum ELSE NULL END),2) AS Sodium
+  , ROUND(AVG(CASE WHEN itemid = 51006 THEN valuenum ELSE NULL END),2) AS UreaNitrogene
+  , ROUND(AVG(CASE WHEN itemid = 51222 THEN valuenum ELSE NULL END),2) AS Hemoglobin
+  , ROUND(AVG(CASE WHEN itemid = 51221 THEN valuenum ELSE NULL END),2) AS Hematocrit
+  , ROUND(AVG(CASE WHEN itemid = 51248 THEN valuenum ELSE NULL END),2) AS MCH
+  , ROUND(AVG(CASE WHEN itemid = 51249 THEN valuenum ELSE NULL END),2) AS MCHC
+  , ROUND(AVG(CASE WHEN itemid = 51250 THEN valuenum ELSE NULL END),2) AS MCV
+  , ROUND(AVG(CASE WHEN itemid = 51265 THEN valuenum ELSE NULL END),2) AS PlateletCount
+  , ROUND(AVG(CASE WHEN itemid = 51277 THEN valuenum ELSE NULL END),2) AS RDW
+  , ROUND(AVG(CASE WHEN itemid = 51279 THEN valuenum ELSE NULL END),2) AS RedBloodCells
+  , ROUND(AVG(CASE WHEN itemid = 51301 THEN valuenum ELSE NULL END),2) AS WhiteBloodCells
+FROM physionet-data.mimic_hosp.labevents AS labevents
+WHERE labevents.itemid IN
+(
+  -- comment is: LABEL
+50868, -- Anion Gap
+50882, -- Bicarbonate
+50893, -- Calcium, Total
+50902, -- Chloride
+50912, -- Creatinine
+50931, -- Glucose
+50960, -- Magnesium
+50970, -- Phosphate
+50971, -- Potassium
+50983, -- Sodium
+51006, -- Urea Nitrogen
+51221, -- Hematocrit
+51222, -- Hemoglobin
+51248, -- MCH
+51249, -- MCHC
+51250, -- MCV
+51265, -- Platelet Count
+51277, -- RDW
+51279, -- Red Blood Cells
+51301  -- White Blood Cells
+)
+GROUP BY labevents.subject_id, labevents.hadm_id 
+),
+
+urine AS (
+-- extract Urine related labs
+SELECT
+   labevents.subject_id,
+   labevents.hadm_id
+  -- convert from itemid into a meaningful column
+  , ROUND(AVG(CASE WHEN itemid = 51491 THEN valuenum ELSE NULL END),2) AS pH_Urine
+  , ROUND(AVG(CASE WHEN itemid = 51498 THEN valuenum ELSE NULL END),2) AS SpecificGravity_Urine
+  , MAX(CASE WHEN itemid = 51506 THEN flag ELSE NULL END) AS Urine_Appearance
+  , MAX(CASE WHEN itemid = 51486 THEN flag ELSE NULL END) AS Leukocytes_Urine
+  , MAX(CASE WHEN itemid = 51466 THEN flag ELSE NULL END) AS Blood_Urine
+  , MAX(CASE WHEN itemid = 51478 THEN flag ELSE NULL END) AS Glucose_Urine
+  , MAX(CASE WHEN itemid = 51492 THEN flag ELSE NULL END) AS Protein_Urine
+  , MAX(CASE WHEN itemid = 51484 THEN flag ELSE NULL END) AS Ketone_Urine
+  , MAX(CASE WHEN itemid = 51464 THEN flag ELSE NULL END) AS Bilirubin_Urine
+  , MAX(CASE WHEN itemid = 51514 THEN flag ELSE NULL END) AS Urobilinogen_Urine
+  , MAX(CASE WHEN itemid = 51487 THEN flag ELSE NULL END) AS Nitrite_Urine
+FROM physionet-data.mimic_hosp.labevents AS labevents
+WHERE labevents.itemid IN
+(
+  -- comment is: LABEL
+  51491, -- pH, Urine
+  51498, -- Specific Gravity, Urine
+  51506, -- Urine Appearance
+  51486, -- Leukocytes, Urine
+  51466, -- Blood, Urine
+  51478, -- Glucose, Urine
+  51492, -- Protein, Urine
+  51484, -- Ketone, Urine
+  51464, -- Bilirubin, Urine
+  51514, -- Urobilinogen, Urine
+  51487 -- Nitrite, Urine
+)
+GROUP BY labevents.subject_id, labevents.hadm_id
+)
+
+SELECT *
+FROM `master-thesis-343707.ThesisTables.DerivedPatientsWithSubjectID` AS patients
+INNER JOIN  blood 
+ON patients.subject_id = blood.subject_id AND patients.hadm_id = blood.hadm_id 
+INNER JOIN urine 
+ON blood.subject_id = urine.subject_id AND blood.hadm_id = urine.hadm_id 
+
+WHERE blood.AnionGap IS NOT NULL AND
+blood.Bicarbonate IS NOT NULL AND
+blood.CalciumTotal IS NOT NULL AND
+blood.Creatinine IS NOT NULL AND
+blood.Glucose IS NOT NULL AND
+blood.Magnesium IS NOT NULL AND
+blood.Phosphate IS NOT NULL AND
+blood.Potassium IS NOT NULL AND
+blood.Sodium IS NOT NULL AND
+blood.UreaNitrogene IS NOT NULL AND
+blood.Hematocrit IS NOT NULL AND
+blood.Hemoglobin IS NOT NULL AND
+blood.MCH IS NOT NULL AND
+blood.MCHC IS NOT NULL AND
+blood.MCV IS NOT NULL AND
+blood.PlateletCount IS NOT NULL AND
+blood.RDW IS NOT NULL AND
+blood.RedBloodCells IS NOT NULL AND
+blood.WhiteBloodCells IS NOT NULL AND
+urine.SpecificGravity_Urine IS NOT NULL AND
+urine.pH_Urine IS NOT NULL
+
+
+ORDER BY blood.subject_id, patients.hadm_id
+
+
+
