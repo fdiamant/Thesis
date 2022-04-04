@@ -1,0 +1,28 @@
+WITH
+  counttable AS (
+  SELECT
+    labevents.itemid,
+    AVG(labevents.ref_range_lower) AS ref_range_lower,
+    AVG(labevents.ref_range_upper) AS ref_range_upper,
+    COUNT(labevents.itemid) AS countlabevents,
+  FROM
+    `physionet-data.mimic_hosp.labevents` AS labevents
+  GROUP BY
+    labevents.itemid )
+SELECT
+  d_labitems.label,
+  counttable.itemid,
+  counttable.countlabevents,
+  counttable.ref_range_lower,
+  counttable.ref_range_upper
+FROM
+  `physionet-data.mimic_hosp.d_labitems` AS d_labitems
+JOIN
+  counttable
+ON
+  d_labitems.itemid = counttable.itemid
+WHERE
+  d_labitems.fluid = 'Urine'
+ORDER BY
+  countlabevents DESC
+  LIMIT 11
