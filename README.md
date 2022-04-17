@@ -4,7 +4,7 @@ The repository is part of the thesis project for the master programme open eGOV 
 
 ## Prerequisite
 
-You need to access to the MIMIC-IV database (https://mimic.mit.edu).  
+For the queries you need to access to the MIMIC-IV database (https://mimic.mit.edu).  
 Access is provided only to credentialed users.  
 For more info: https://physionet.org/settings/credentialing/  
 
